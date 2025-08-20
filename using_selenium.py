@@ -1,55 +1,51 @@
 import selenium
 from selenium import webdriver
 from selenium.webdriver.common.by import By
-from selenium.webdriver.common.keys import Keys
-
+import json
 
 driver = webdriver.Chrome()
-driver.get("https://www.amazon.in/")
+driver.get("https://www.amazon.in")
 driver.maximize_window()
 
-search_box= driver.find_element(By.ID, "twotabsearchtextbox")
+search_box = driver.find_element(By.ID, "twotabsearchtextbox")
 search_box.clear()
-search_box.send_keys("dell laptop")
+search_box.send_keys("dell laptops")
 driver.find_element(By.ID, "nav-search-submit-button").click()
 
 driver.find_element(By.XPATH, "//span[text()='Dell']").click()
 
-laptop_name = []
-laptop_price= []
-laptop_reviews=[]
+laptops = driver.find_elements(By.XPATH, '//div[@data-component-type="s-search-result"]')
 
+final_list = []
 
-#allitem
-all_products= driver.find_elements(By.XPATH, '//div[@data-component-type="s-search-result"]')
-
-for product in all_products:
-    #name
-    names = product.find_elements(By.XPATH, ".//span[@class='a-size-medium a-color-base a-text-normal']")
-    for name in names:
-        laptop_name.append(name.text)
-
-    #price
-    prices= product.find_elements(By.XPATH, ".//span[@class='a-price-whole']")
-    for price in prices:
-        laptop_price.append(price.text)
-
-    #review
+for laptop in laptops: 
+    # name
     try:
-        if len(product.find_elements(By.XPATH,".//span[@class='a-price-whole']"))>0:
-            prices= product.find_elements(By.XPATH,".//span[@class='a-price-whole']")
-            for price in prices:
-                # print('the lenght is ===>',len(price.text))
-                laptop_price.append(price.text)
-        else:
-            laptop_price.append("0")
+        name = laptop.find_element(By.XPATH, ".//h2[@class='a-size-medium a-spacing-none a-color-base a-text-normal']").text
     except:
-        pass
+        name = "N/A"
     
+    # price
+    try:
+        price = laptop.find_element(By.XPATH, ".//span[@class='a-price-whole']").text
+    except:
+        price = "0"
+    
+    # reviews
+    try:
+        review = laptop.find_element(By.XPATH, ".//span[@class='a-size-base s-underline-text']").text
+    except:
+        review = "0"
+    
+    # append structured data
+    final_list.append({
+        "Name": name,
+        "Price": price,
+        "Reviews": review
+    })
 
+# save to JSON file
+with open("amazon_dell_laptops.json", "w", encoding="utf-8") as f:
+    json.dump(final_list, f, indent=4, ensure_ascii=False)
 
-
-
-print('name=', len(laptop_name))
-print('price=', len(laptop_price))
-print('review=', len(laptop_reviews))
+print("✅ Data saved to amazon_dell_laptops.json")
